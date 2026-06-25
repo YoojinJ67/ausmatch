@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AusMatch — 호주 워홀 매칭</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+  min-height:100vh;min-height:100dvh;
+  background:#ffffff;
+  display:flex;justify-content:center;align-items:flex-start;
+  overflow-x:hidden;
+}
+.app{width:100%;max-width:460px;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;background:#fff}
+.screen{display:none;flex-direction:column;min-height:100vh;min-height:100dvh}
+.screen.active{display:flex;animation:fadeUp .28s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── LANG SCREEN ── */
+#s-lang{align-items:center;justify-content:center;gap:32px;padding:48px 28px;background:#fff}
+.mascot{font-size:68px;display:block;margin-bottom:12px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.logo-t{font-size:28px;font-weight:800;background:linear-gradient(135deg,#f472b6,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px}
+.logo-s{color:#6b7280;font-size:13px;font-weight:500;line-height:1.5;text-align:center;max-width:220px;margin:0 auto}
+.lang-card{border-radius:24px;padding:28px 24px;width:100%;background:#f9f9fb;border:1px solid #ede9fe}
+.lang-card p{color:#6b5b95;font-size:14px;margin-bottom:20px;line-height:1.5;text-align:center}
+.lang-btns{display:flex;flex-direction:column;gap:12px}
+.lbtn{display:flex;align-items:center;justify-content:center;gap:10px;padding:17px;border-radius:16px;border:none;cursor:pointer;font-size:16px;font-weight:700;transition:all .2s;width:100%}
+.lbtn-ko{background:linear-gradient(135deg,#f9a8d4,#f472b6);color:#fff;box-shadow:0 6px 18px rgba(244,114,182,.3)}
+.lbtn-en{background:#fff;color:#7c3aed;border:2px solid #e9d5ff}
+.lbtn:hover{transform:translateY(-2px)}
+.lbtn:active{transform:translateY(0)}
+
+/* ── INTRO SCREEN ── */
+#s-intro{padding:0;background:#fff}
+.intro-topbar{display:flex;align-items:center;padding:18px 20px 0}
+.back-lang{background:none;border:none;color:#9ca3af;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:4px;padding:6px 0}
+.back-lang:hover{color:#f472b6}
+.intro-inner{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 24px 40px}
+.intro-card{border-radius:24px;padding:28px 24px;width:100%;background:#fdf8ff;border:1px solid #f3e8ff}
+.intro-icon{font-size:48px;text-align:center;display:block;margin-bottom:14px}
+.intro-card h2{font-size:20px;font-weight:800;color:#1e1b4b;text-align:center;line-height:1.45;margin-bottom:8px}
+.intro-card p{color:#6b7280;font-size:13px;text-align:center;line-height:1.6;margin-bottom:20px}
+.feats{display:flex;flex-direction:column;gap:9px;margin-bottom:24px}
+.feat{display:flex;align-items:center;gap:12px;padding:11px 14px;background:#fff;border-radius:12px;border:1px solid #f3e8ff}
+.feat-icon{font-size:18px;width:24px;text-align:center}
+.feat-text{font-size:13px;color:#374151;font-weight:500}
+.btn-main{width:100%;padding:17px;border:none;border-radius:14px;cursor:pointer;background:linear-gradient(135deg,#f9a8d4,#f472b6);color:#fff;font-size:16px;font-weight:700;box-shadow:0 6px 18px rgba(244,114,182,.3);transition:all .2s}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(244,114,182,.4)}
+.btn-back{width:100%;padding:17px;border:1.5px solid #f3e8ff;border-radius:14px;cursor:pointer;background:#fff;color:#9ca3af;font-size:16px;font-weight:600;transition:all .2s;margin-top:32px}
+.btn-back:hover{border-color:#f9a8d4;color:#f472b6;background:#fdf2f8}
+
+/* ── QUIZ SCREEN ── */
+#s-quiz{background:#fff}
+.q-header{padding:20px 20px 14px;border-bottom:1px solid #f5f5f5}
+.q-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.icon-btn{width:36px;height:36px;border-radius:10px;border:1.5px solid #e5e7eb;cursor:pointer;background:#fff;color:#6b7280;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .18s}
+.icon-btn:hover{border-color:#f9a8d4;color:#f472b6;background:#fdf2f8}
+.q-lbl{font-size:13px;font-weight:600;color:#9ca3af}
+.skip-btn{display:none}
+.prog-track{height:4px;background:#f3f4f6;border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,#f9a8d4,#f472b6);border-radius:2px;transition:width .35s ease}
+
+/* Quiz body: minimal top gap, card starts near progress bar */
+.q-body{
+  flex:1;
+  padding:36px 24px 24px;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  overflow:hidden;
+}
+/* Single card — identical style to intro card, but taller */
+.q-card{
+  border-radius:24px;
+  border:1px solid #f3e8ff;
+  background:#fdf8ff;
+  padding:26px 20px 24px;
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+/* Question sits at top of the card */
+.q-text{
+  font-size:17px;
+  font-weight:700;
+  color:#111827;
+  line-height:1.5;
+}
+/* Separated answer buttons */
+.opts{display:flex;flex-direction:column;gap:11px}
+.opt-btn{
+  display:flex;align-items:center;gap:14px;
+  padding:20px 16px;
+  border-radius:14px;
+  border:1.5px solid #f0ecff;
+  background:#fff;
+  font-size:14px;font-weight:500;color:#374151;
+  cursor:pointer;text-align:left;
+  transition:all .16s;
+  width:100%;
+  -webkit-tap-highlight-color:transparent;
+  -webkit-appearance:none;
+}
+/* hover: only real mouse hover on desktop */
+@media(hover:hover){
+  .opt-btn:hover{background:#fdf2f8;border-color:#f9a8d4;color:#be185d}
+}
+/* active: tap feedback on touch — clears the moment finger lifts */
+.opt-btn:active{background:#fdf2f8;border-color:#f9a8d4;color:#be185d}
+.opt-btn:focus{outline:none}
+.opt-btn:focus:not(:focus-visible){background:#fff;border-color:#f0ecff;color:#374151}
+.opt-e{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+.opt-t{flex:1}
+
+/* ── RESULTS SCREEN ── */
+#s-results{background:#fff;overflow-y:auto}
+.res-hero{padding:44px 24px 20px;text-align:center;background:linear-gradient(180deg,#fdf2f8 0%,#fff 100%);border-bottom:1px solid #fce7f3}
+.res-hero .trophy{font-size:48px;display:block;margin-bottom:10px}
+.res-hero h2{font-size:21px;font-weight:800;color:#1e1b4b;margin-bottom:5px}
+.res-hero p{color:#9ca3af;font-size:13px}
+.res-body{padding:20px 18px 52px;display:flex;flex-direction:column;gap:14px}
+.sec-lbl{font-size:15px;font-weight:800;color:#1f2937;padding:6px 2px;display:flex;align-items:center;gap:7px}
+.pf-card{border-radius:18px;padding:16px 18px;background:#fdf8ff;border:1px solid #f3e8ff}
+.card-title{font-size:13px;font-weight:700;color:#6b7280;margin-bottom:10px}
+.tags{display:flex;flex-wrap:wrap;gap:7px}
+.tag{padding:5px 13px;background:#fff;border:1px solid #fbcfe8;border-radius:20px;font-size:12px;font-weight:600;color:#be185d}
+.r-card{border-radius:18px;padding:16px 18px;background:#fff;border:1px solid #f3f4f6;box-shadow:0 2px 12px rgba(0,0,0,.05)}
+.city-item,.job-item{padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid #f9fafb}
+.city-item:last-child,.job-item:last-child{padding-bottom:0;margin-bottom:0;border-bottom:none}
+.item-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.medal{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+.item-info{flex:1;min-width:0}
+.item-name{font-size:15px;font-weight:700;color:#111827}
+.item-sub{font-size:12px;color:#9ca3af;margin-top:3px}
+.pct-col{text-align:right;flex-shrink:0}
+.pct-num{font-size:17px;font-weight:800;color:#f472b6}
+.bar-track{width:64px;height:4px;background:#f3f4f6;border-radius:2px;overflow:hidden;margin-top:4px;margin-left:auto}
+.bar-fill{height:100%;background:linear-gradient(90deg,#f9a8d4,#f472b6);border-radius:2px;width:0;transition:width 1.2s ease}
+.c-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.c-tag{padding:3px 9px;background:#f5f3ff;border-radius:6px;font-size:11px;font-weight:600;color:#7c3aed}
+.reason-txt{font-size:13px;color:#4b5563;line-height:1.7}
+.wage-badge{display:inline-block;padding:3px 9px;background:#fdf2f8;border-radius:6px;font-size:11px;font-weight:600;color:#be185d;border:1px solid #fbcfe8}
+.block-lbl{font-size:11px;font-weight:700;color:#c084fc;margin-bottom:4px;margin-top:10px;text-transform:uppercase;letter-spacing:.5px}
+.prep-box{padding:11px 13px;background:#fafafa;border-radius:10px;border:1px solid #f3f4f6;margin-top:6px}
+.prep-txt{font-size:12px;color:#4b5563;line-height:2;white-space:pre-line}
+.restart-btn{width:100%;padding:17px;border:none;border-radius:14px;cursor:pointer;background:linear-gradient(135deg,#f9a8d4,#f472b6);color:#fff;font-size:15px;font-weight:700;box-shadow:0 6px 18px rgba(244,114,182,.25);transition:all .2s;margin-top:4px}
+.restart-btn:hover{transform:translateY(-2px)}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ① 언어 선택 -->
+  <div id="s-lang" class="screen active">
+    <div style="text-align:center">
+      <span class="mascot">🦘</span>
+      <div class="logo-t">AusMatch</div>
+      <div class="logo-s">나에게 잘 맞는 호주워홀 직종과 도시 찾기</div>
+    </div>
+    <div class="lang-card">
+      <p>언어를 선택해 주세요<br>Please select your language</p>
+      <div class="lang-btns">
+        <button class="lbtn lbtn-ko" onclick="selectLang('ko')">🇰🇷 한국어로 시작하기</button>
+        <button class="lbtn lbtn-en" onclick="selectLang('en')">🇦🇺 Start in English</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② 인트로 -->
+  <div id="s-intro" class="screen">
+    <div class="intro-topbar">
+      <button class="back-lang" id="back-lang-btn" onclick="show('s-lang')">← <span id="back-lang-txt"></span></button>
+    </div>
+    <div class="intro-inner">
+      <div class="intro-card">
+        <span class="intro-icon">🦘</span>
+        <h2 id="i-title"></h2>
+        <p id="i-desc"></p>
+        <div class="feats" id="i-feats"></div>
+        <button class="btn-main" id="i-btn" onclick="startQuiz()"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 퀴즈 -->
+  <div id="s-quiz" class="screen">
+    <div class="q-header">
+      <div class="q-topbar">
+        <div style="width:36px"></div>
+        <span class="q-lbl" id="q-lbl"></span>
+        <div style="width:36px"></div>
+      </div>
+      <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+    </div>
+    <div class="q-body" id="q-body"></div>
+  </div>
+
+  <!-- ④ 결과 -->
+  <div id="s-results" class="screen">
+    <div class="res-hero">
+      <span class="trophy">🎉</span>
+      <h2 id="r-title"></h2>
+      <p id="r-sub"></p>
+    </div>
+    <div class="res-body" id="r-body"></div>
+  </div>
+
+</div>
+<script>
+// ════════════════════════════════════════
+// TRANSLATIONS
+// ════════════════════════════════════════
+const T = {
+  ko:{
+    iTitle:'나에게 딱 맞는<br>호주 도시와 워홀 직종 찾기!',
+    iDesc:'7가지 성향 질문에 답하면<br>당신을 위한 도시와 직업을 찾아드려요 ✨',
+    feats:[['❓','7가지 성향 질문'],['🏙️','호주 주요 도시 추천'],['💼','딱 맞는 직업 & 시급'],['📊','매칭 퍼센트 확인']],
+    iBtn:'시작하기 →',skip:'건너뛰기',of:'/',
+    backLang:'언어 변경',
+    rTitle:'나의 워홀 매칭 결과! 🇦🇺',rSub:'성향 분석 결과를 확인해 보세요',
+    pfTitle:'나의 성향',
+    cityTitle:'🏙️ 추천 도시 TOP 3',jobTitle:'💼 추천 직업 TOP 3',
+    whyLbl:'왜 추천하나요?',prepLbl:'이렇게 준비하세요',
+    restart:'다시 시작하기 🔄',
+  },
+  en:{
+    iTitle:'Find Your Perfect<br>Aus Working Holiday!',
+    iDesc:'Answer 7 questions to discover the best city and job for your personality ✨',
+    feats:[['❓','7 personality questions'],['🏙️','Australian city recommendations'],['💼','Best jobs & hourly wages'],['📊','Percentage match scores']],
+    iBtn:"Let's Start →",skip:'Skip',of:'of',
+    backLang:'Change Language',
+    rTitle:'Your WHV Match Results! 🇦🇺',rSub:'Based on your personality profile',
+    pfTitle:'Your Personality',
+    cityTitle:'🏙️ Top 3 Recommended Cities',jobTitle:'💼 Top 3 Recommended Jobs',
+    whyLbl:'Why this pick?',prepLbl:'How to prepare',
+    restart:'Start Again 🔄',
+  }
+};
+
+// ════════════════════════════════════════
+// QUESTIONS
+// ════════════════════════════════════════
+const QS = {
+  ko:[
+    {q:'어떤 환경에서 일하는 걸 가장 선호해요?',opts:[
+      {e:'🏙️',t:'실내에서 활기차게, 사람들과 함께요!',d:{urban:2,social:2}},
+      {e:'🌿',t:'야외에서 자연을 느끼며 일하고 싶어요',d:{urban:-2,active:2,adventure:1}},
+      {e:'🎧',t:'조용히 혼자 집중해서 일하고 싶어요',d:{social:-3,active:-1}}
+    ]},
+    {q:'여가 시간에 주로 무엇을 즐기나요?',opts:[
+      {e:'☕',t:'카페, 쇼핑, 도시 탐험이 좋아요',d:{urban:2}},
+      {e:'🏄',t:'서핑, 하이킹, 캠핑을 즐겨요',d:{active:2,adventure:2,urban:-1}},
+      {e:'📚',t:'독서, 넷플릭스, 창작 활동이 좋아요',d:{social:-1}}
+    ]},
+    {q:'하루에 얼마나 많은 사람들과 교류하고 싶어요?',opts:[
+      {e:'🤝',t:'많이! 새로운 사람 만나는 게 너무 좋아요',d:{social:3}},
+      {e:'👥',t:'적당히, 팀원들과 함께하면 충분해요',d:{social:1}},
+      {e:'🙋',t:'최소화하고 싶어요, 혼자가 더 편해요',d:{social:-3}}
+    ]},
+    {q:'체력적인 활동에 대해 어떻게 생각해요?',opts:[
+      {e:'💪',t:'완전 좋아요! 몸 쓰는 일이 재밌어요',d:{active:3,adventure:1}},
+      {e:'🚶',t:'적당한 활동은 괜찮아요',d:{}},
+      {e:'💻',t:'앉아서 하는 일이 훨씬 편해요',d:{active:-3}}
+    ]},
+    {q:'워홀에서 가장 중요한 게 뭐예요?',opts:[
+      {e:'💰',t:'돈! 최대한 많이 모아서 가고 싶어요',d:{earning:3}},
+      {e:'⚖️',t:'수입도 경험도 균형 있게요',d:{}},
+      {e:'✨',t:'경험과 스킬을 쌓는 게 더 중요해요',d:{earning:-2}}
+    ]},
+    {q:'어떤 생활 방식을 원해요?',opts:[
+      {e:'🌆',t:'바쁘고 활기찬 도시 생활이 좋아요',d:{urban:3}},
+      {e:'🌊',t:'여유롭고 느긋한 해변/자연 생활이요',d:{urban:-2,adventure:1}},
+      {e:'🏕️',t:'모험적이고 자유로운 생활을 원해요',d:{adventure:3,urban:-3}}
+    ]},
+    {q:'영어 의사소통에 자신이 있나요?',opts:[
+      {e:'🗣️',t:'네! 영어로 대화하는 게 편해요',d:{english:3}},
+      {e:'📖',t:'기본적인 대화는 할 수 있어요',d:{}},
+      {e:'😅',t:'아직 많이 부족해요',d:{english:-3}}
+    ]}
+  ],
+  en:[
+    {q:'What work environment do you prefer?',opts:[
+      {e:'🏙️',t:'Indoors with energy, surrounded by people!',d:{urban:2,social:2}},
+      {e:'🌿',t:'Outdoors in nature and fresh air',d:{urban:-2,active:2,adventure:1}},
+      {e:'🎧',t:'Quiet focused work on my own',d:{social:-3,active:-1}}
+    ]},
+    {q:'What do you enjoy in your free time?',opts:[
+      {e:'☕',t:'Cafes, shopping, exploring the city',d:{urban:2}},
+      {e:'🏄',t:'Surfing, hiking, camping outdoors',d:{active:2,adventure:2,urban:-1}},
+      {e:'📚',t:'Reading, Netflix, creative hobbies',d:{social:-1}}
+    ]},
+    {q:'How much social interaction do you want daily?',opts:[
+      {e:'🤝',t:'A lot! I love meeting new people',d:{social:3}},
+      {e:'👥',t:'Moderate — a good team is enough',d:{social:1}},
+      {e:'🙋',t:'Minimal — I work better alone',d:{social:-3}}
+    ]},
+    {q:'How do you feel about physical work?',opts:[
+      {e:'💪',t:'Love it! Physical work keeps me energized',d:{active:3,adventure:1}},
+      {e:'🚶',t:'Moderate activity is fine',d:{}},
+      {e:'💻',t:'I prefer sitting at a desk',d:{active:-3}}
+    ]},
+    {q:'What matters most to you in your WHV?',opts:[
+      {e:'💰',t:'Money! I want to save as much as possible',d:{earning:3}},
+      {e:'⚖️',t:'A balance of income and experience',d:{}},
+      {e:'✨',t:'Building skills and experiences matters more',d:{earning:-2}}
+    ]},
+    {q:'What lifestyle are you looking for?',opts:[
+      {e:'🌆',t:'Busy, vibrant city life',d:{urban:3}},
+      {e:'🌊',t:'Relaxed beach or countryside vibes',d:{urban:-2,adventure:1}},
+      {e:'🏕️',t:'Adventure and freedom in nature',d:{adventure:3,urban:-3}}
+    ]},
+    {q:'How confident are you with English communication?',opts:[
+      {e:'🗣️',t:"Very confident — it's no problem!",d:{english:3}},
+      {e:'📖',t:'I can handle basic conversations',d:{}},
+      {e:'😅',t:'Still working on it',d:{english:-3}}
+    ]}
+  ]
+};
+
+// ════════════════════════════════════════
+// CITIES
+// ════════════════════════════════════════
+const CITIES = [
+  {name:'Sydney',nameKo:'시드니',emoji:'🌉',
+   sc:{urban:9,social:8,active:3,earning:7,english:9,adventure:4},
+   tags:{ko:['대도시','활기찬','한인타운'],en:['Big City','Vibrant','Korean Town']},
+   reason:{
+     ko:'도시적인 라이프스타일과 활발한 사교 활동을 즐기는 당신에게 딱이에요. 일자리가 풍부하고 한인 커뮤니티도 크게 형성되어 있어 정착이 수월해요.',
+     en:"Your love for city life and active socializing makes Sydney a perfect fit. Jobs are plentiful and a large expat community makes settling in easy."
+   }},
+  {name:'Melbourne',nameKo:'멜버른',emoji:'☕',
+   sc:{urban:9,social:7,active:3,earning:6,english:8,adventure:5},
+   tags:{ko:['카페천국','예술','다양한 문화'],en:['Cafe Culture','Arts','Multicultural']},
+   reason:{
+     ko:'카페 문화와 예술적인 분위기를 즐기는 당신에게 멜버른은 완벽해요. 다양한 문화와 훌륭한 음식 씬이 워홀 생활을 더욱 풍요롭게 해줄 거예요.',
+     en:"If you love cafes, arts, and diverse culture, Melbourne is your paradise. A world-class food scene and artistic vibe will make your working holiday rich."
+   }},
+  {name:'Brisbane',nameKo:'브리즈번',emoji:'☀️',
+   sc:{urban:7,social:7,active:5,earning:6,english:7,adventure:5},
+   tags:{ko:['맑은 날씨','균형잡힌','성장도시'],en:['Sunny','Balanced','Growing City']},
+   reason:{
+     ko:'맑은 날씨와 도시·자연의 균형을 원하는 당신에게 브리즈번은 이상적이에요. 시드니·멜버른보다 물가가 낮고 일자리도 꾸준히 늘어나고 있어요.',
+     en:"If you want sunny weather with a balance of city and nature, Brisbane is ideal. Living costs are lower than Sydney or Melbourne, and the job market keeps growing."
+   }},
+  {name:'Gold Coast',nameKo:'골드코스트',emoji:'🏄',
+   sc:{urban:5,social:9,active:7,earning:6,english:7,adventure:7},
+   tags:{ko:['해변','서핑','관광'],en:['Beach','Surfing','Tourism']},
+   reason:{
+     ko:'서핑과 해변을 좋아하고 새로운 사람들을 만나는 걸 즐기는 당신에게 골드코스트는 최고예요. 관광 산업이 발달해 워홀러 일자리도 풍부해요.',
+     en:"If you love the beach, surfing, and meeting new people, the Gold Coast is your place. A booming tourism industry means plenty of working holiday job opportunities."
+   }},
+  {name:'Perth',nameKo:'퍼스',emoji:'⛏️',
+   sc:{urban:6,social:5,active:6,earning:9,english:7,adventure:6},
+   tags:{ko:['고시급','광업','여유로운'],en:['High Wages','Mining','Laid-back']},
+   reason:{
+     ko:'높은 시급과 여유로운 생활을 원한다면 퍼스가 딱이에요. 광업과 건설업 덕분에 호주에서 시급이 가장 높은 도시 중 하나예요.',
+     en:"If maximizing earnings is the goal, Perth delivers. Thanks to mining and construction, it consistently offers some of Australia's highest hourly wages."
+   }},
+  {name:'Cairns',nameKo:'케언즈',emoji:'🌴',
+   sc:{urban:3,social:7,active:8,earning:5,english:5,adventure:9},
+   tags:{ko:['자연','그레이트배리어리프','팜잡'],en:['Nature','Great Barrier Reef','Farm Access']},
+   reason:{
+     ko:'자연과 모험을 사랑하는 당신에게 케언즈는 꿈의 도시예요. 그레이트배리어리프와 열대우림이 주변에 있어 퇴근 후 매일이 액티비티예요.',
+     en:"For nature lovers and adventure seekers, Cairns is a dream. You're steps from the Great Barrier Reef and tropical rainforest — every day off is an adventure."
+   }},
+  {name:'Darwin',nameKo:'다윈',emoji:'🦎',
+   sc:{urban:2,social:4,active:9,earning:7,english:3,adventure:10},
+   tags:{ko:['아웃백','팜잡천국','모험'],en:['Outback','Farm Jobs','Adventure']},
+   reason:{
+     ko:'진정한 아웃백 경험과 팜잡을 원하는 모험가라면 다윈이 딱이에요. 2년 비자 연장을 위한 지역 작업 조건을 가장 쉽게 충족할 수 있는 곳이에요.',
+     en:"For true adventurers seeking the outback and farm work, Darwin is ideal. It's one of the easiest places to fulfill regional work requirements for a 2nd-year visa."
+   }},
+  {name:'Adelaide',nameKo:'애들레이드',emoji:'🍷',
+   sc:{urban:6,social:5,active:3,earning:5,english:7,adventure:3},
+   tags:{ko:['여유로운','와인','저렴한 물가'],en:['Relaxed','Wine Region','Affordable']},
+   reason:{
+     ko:'와인과 맛있는 음식, 여유로운 생활 속에서 워홀을 즐기고 싶다면 애들레이드를 추천해요. 물가가 저렴하고 한적해서 저축하기도 좋아요.',
+     en:"If you're after a relaxed lifestyle with great food and wine, Adelaide is the answer. Lower living costs and a quieter pace make it great for saving money too."
+   }}
+];
+
+// ════════════════════════════════════════
+// JOBS
+// ════════════════════════════════════════
+const JOBS = [
+  {name:{ko:'카페/레스토랑',en:'Cafe / Restaurant'},emoji:'☕',wage:'$22–28/hr',
+   sc:{social:9,active:5,urban:7,earning:4,english:6,adventure:4},
+   reason:{
+     ko:'사람들과 활발하게 소통하는 걸 즐기고 도시 생활을 선호하는 당신에게 딱 맞는 직업이에요. 영어 실력도 자연스럽게 늘고 팁 수입까지 기대할 수 있어요.',
+     en:'Your sociable nature and love for city life make cafe or restaurant work a perfect match. Your English will improve naturally, and tips can boost your earnings.'
+   },
+   prep:{
+     ko:'• RSA(주류 서비스) 자격증 취득 권장 (온라인, 1–2일 소요)\n• 기본 커피 용어와 주문 영어 표현 사전 숙지\n• SEEK·Indeed에서 "cafe staff / waitstaff" 키워드로 구직\n• 이력서에 서비스·고객 응대 경험 강조, 밝고 적극적인 태도 어필\n• 시드니·멜버른은 경쟁이 치열하므로 직접 가게 방문 지원도 효과적',
+     en:'• Get your RSA (Responsible Service of Alcohol) certificate (online, 1–2 days)\n• Brush up on coffee terminology and common ordering phrases\n• Search SEEK or Indeed: "cafe staff / waitstaff / hospitality"\n• Highlight any customer service experience on your resume\n• In Sydney or Melbourne, walk-in applications to cafes can be very effective'
+   }},
+  {name:{ko:'팜잡 (농장일)',en:'Farm Work'},emoji:'🌾',wage:'$25–35/hr',
+   sc:{social:2,active:9,urban:1,earning:7,english:1,adventure:8},
+   reason:{
+     ko:'야외에서 몸을 쓰며 일하는 걸 즐기고 최대한 저축하고 싶은 당신에게 안성맞춤이에요. 2년 비자 연장을 위한 지역 작업 조건 충족에도 해당돼요.',
+     en:'If you love physical outdoor work and want to maximize savings, farm work is your match. It also fulfills the regional work requirement needed for a 2nd-year visa.'
+   },
+   prep:{
+     ko:'• harvesttrail.gov.au에서 지역·시즌별 일자리 검색\n• 선크림, 방충제, 작업용 장갑, 튼튼한 신발 필수 준비\n• 숙소 포함(live-in) 조건인지 미리 확인해 비용 절감\n• 케언즈, 번다버그, 맥카이, 그리핀 등 주요 팜잡 지역 파악\n• 페이스북 "호주 워홀러" 그룹에서 최신 일자리 정보 수집 필수',
+     en:'• Search harvesttrail.gov.au for seasonal jobs by region and crop type\n• Pack essentials: sunscreen, insect repellent, work gloves, sturdy shoes\n• Check if live-in accommodation is included to reduce living costs\n• Key regions: Cairns, Bundaberg, Mackay, Griffith\n• Join Facebook groups like "Working Holiday Australia" for real-time leads'
+   }},
+  {name:{ko:'바텐더/바리스타',en:'Bartender / Barista'},emoji:'🍸',wage:'$24–32/hr',
+   sc:{social:9,active:5,urban:8,earning:6,english:7,adventure:5},
+   reason:{
+     ko:'활기찬 분위기에서 사람들과 어울리는 걸 즐기는 당신에게 바 업무는 천직이에요. 야간 할증 수당으로 시급이 더 높고 소셜 라이프도 훨씬 풍부해져요.',
+     en:"Your energetic social personality makes bar or cafe work a natural fit. Night shift loadings boost your hourly pay, and you'll have a vibrant social life to match."
+   },
+   prep:{
+     ko:'• RSA(주류 서비스) 자격증 필수 취득 (온라인·대면, 1일)\n• 바리스타는 커피 머신 사용법과 라떼 아트 기초 연습 추천\n• Gumtree·SEEK에서 "bartender / barista" 키워드로 구직\n• 나이트라이프가 활성화된 멜버른·시드니·골드코스트 위주로 지원\n• 경험 없어도 "willing to train" 포지션이 많으니 적극적으로 지원',
+     en:'• RSA (Responsible Service of Alcohol) certificate is mandatory (1 day)\n• For barista roles: practice coffee machine skills and basic latte art\n• Search Gumtree or SEEK for "bartender / barista"\n• Target Melbourne, Sydney, or the Gold Coast for the best nightlife jobs\n• Many venues offer on-the-job training — apply even without experience'
+   }},
+  {name:{ko:'건설/노동',en:'Construction / Labor'},emoji:'🏗️',wage:'$28–40/hr',
+   sc:{social:3,active:10,urban:3,earning:9,english:2,adventure:6},
+   reason:{
+     ko:'체력이 좋고 높은 수입을 원하는 당신에게 건설·노동직은 최적이에요. 호주에서 시급이 가장 높은 직종 중 하나로 퍼스·다윈 지역에서 특히 수요가 많아요.',
+     en:"Your physical fitness and focus on high earnings make construction or labor work the top match. It ranks among Australia's highest-paying jobs, especially in Perth and Darwin."
+   },
+   prep:{
+     ko:'• White Card(건설 안전 자격증) 필수 취득 (온라인+현장, 약 1일)\n• 안전모, 형광 조끼, 안전화 등 기본 안전 장비는 직접 준비\n• 현지 Labour Hire Agency에 등록하면 빠른 배치 가능\n• SEEK에서 "labourer / construction worker / trades assistant" 검색\n• 퍼스와 다윈은 광업·인프라 수요로 연중 일자리가 안정적',
+     en:"• White Card (construction safety induction) is mandatory — complete online + in-person (1 day)\n• You'll need your own PPE: hard hat, hi-vis vest, and steel-capped boots\n• Register with a local Labour Hire Agency to get placed quickly\n• Search SEEK for 'labourer / construction worker / trades assistant'\n• Perth and Darwin have stable year-round demand due to mining and infrastructure"
+   }},
+  {name:{ko:'리테일 (판매)',en:'Retail'},emoji:'🛍️',wage:'$21–26/hr',
+   sc:{social:7,active:3,urban:8,earning:4,english:7,adventure:3},
+   reason:{
+     ko:'사람들과 적당히 소통하면서 실내에서 일하고 싶은 당신에게 리테일은 좋은 선택이에요. 영어 실력 향상에도 효과적이고 근무 환경이 비교적 편안해요.',
+     en:"If you prefer comfortable indoor work with moderate social interaction, retail is a solid choice. It's also one of the best environments for naturally improving your English."
+   },
+   prep:{
+     ko:'• 특별한 자격증 없이 바로 지원 가능, 기본 영어 회화 연습이 중요\n• Woolworths, Coles, Kmart 등 주요 체인 채용 페이지에서 직접 지원\n• SEEK·Indeed에서 "retail assistant / sales assistant" 검색\n• 크리스마스·이스터 시즌에 단기 채용이 대폭 증가하니 미리 지원\n• 면접 시 고객 서비스 마인드와 팀워크를 어필하면 효과적',
+     en:"• No certificates required — focus on polishing basic English conversation\n• Apply directly on the career pages of Woolworths, Coles, Kmart, or Big W\n• Search SEEK or Indeed for 'retail assistant / sales assistant'\n• Christmas and Easter see major hiring surges — apply early to get ahead\n• In interviews, emphasize your customer service attitude and team spirit"
+   }},
+  {name:{ko:'관광/액티비티',en:'Tourism & Activities'},emoji:'🤿',wage:'$22–30/hr',
+   sc:{social:8,active:8,urban:4,earning:5,english:8,adventure:9},
+   reason:{
+     ko:'모험과 새로운 사람들을 사랑하는 당신에게 관광·액티비티 직종은 꿈의 직업이에요. 스노클링, 다이빙, 투어 가이드를 하면서 돈도 버는 신나는 일이에요.',
+     en:"Your adventurous spirit and love for meeting people make tourism and activity work a dream job. You'll earn money doing thrilling things like snorkeling, diving, or guiding tours."
+   },
+   prep:{
+     ko:'• 다이빙·스노클링 가이드는 Open Water Diver 자격증 사전 취득 추천\n• 케언즈, 골드코스트, 에어즈록 주변 관광지 중심으로 구직 활동\n• "tour guide / activity instructor / tourism operator" 키워드로 검색\n• 영어 커뮤니케이션 능력이 핵심—외국인 관광객 대응 표현 미리 준비\n• 성수기(11월–3월)에 채용이 가장 활발하니 사전에 지원 마무리',
+     en:"• For diving/snorkeling guide roles, get your Open Water Diver certification first\n• Focus your job search on Cairns, the Gold Coast, and areas near Uluru\n• Search for 'tour guide / activity instructor / tourism operator'\n• Strong English communication is essential — practice tourist-facing phrases\n• Peak hiring season is November–March; get applications in before you arrive"
+   }},
+  {name:{ko:'IT / 사무직',en:'IT / Office Work'},emoji:'💻',wage:'$35–60/hr',
+   sc:{social:2,active:1,urban:7,earning:9,english:9,adventure:2},
+   reason:{
+     ko:'전문 스킬을 보유하고 높은 수입을 목표로 하는 당신에게 IT·사무직은 최고의 선택이에요. 시드니·멜버른의 테크 씬은 빠르게 성장 중이에요.',
+     en:"With technical skills and high earning ambitions, IT or office work is your top match. Sydney and Melbourne's tech scenes are booming with real opportunities for career growth."
+   },
+   prep:{
+     ko:'• GitHub 포트폴리오와 LinkedIn 프로필을 영문으로 정리·업데이트\n• 워홀 비자로 취업 가능하지만 스폰서십 필요 기업도 있으니 사전 확인\n• SEEK·LinkedIn에서 "developer / IT support / data analyst" 등으로 검색\n• 시드니 서리힐스·CBD, 멜버른 CBD의 테크 허브에서 네트워킹 활동\n• 구직 기간이 길 수 있으니 출국 전 온라인으로 미리 지원 시작 추천',
+     en:"• Polish your GitHub portfolio and update your LinkedIn profile in English\n• WHV holders can work in IT, but some firms need visa sponsorship — check upfront\n• Search SEEK or LinkedIn for 'developer / IT support / data analyst'\n• Network in Sydney's Surry Hills/CBD or Melbourne's CBD tech hubs\n• The search may take time — start applying online before you arrive in Australia"
+   }},
+  {name:{ko:'청소/하우스키핑',en:'Cleaning / Housekeeping'},emoji:'🧹',wage:'$22–28/hr',
+   sc:{social:1,active:6,urban:4,earning:5,english:1,adventure:2},
+   reason:{
+     ko:'혼자 조용히 일하고 영어 부담 없이 수입을 얻고 싶은 당신에게 청소·하우스키핑은 현실적인 선택이에요. 호텔·에어비앤비 시장이 크기 때문에 일자리도 찾기 쉬워요.',
+     en:"If you prefer quiet, independent work with minimal language pressure, cleaning or housekeeping is a practical and accessible option. Jobs are always available in the hotel and Airbnb market."
+   },
+   prep:{
+     ko:'• 특별한 자격증 없이 바로 지원 가능, 경험 없어도 채용되는 경우 많음\n• 호텔 채용 페이지·SEEK에서 "housekeeper / cleaner / room attendant" 검색\n• 현지 청소 업체에 등록하면 다양한 현장에 배치받을 수 있어요\n• 청소 장비는 대부분 업체에서 제공하므로 별도 준비 불필요\n• 에어비앤비 청소 스타트업(Tidy, Hometime 등)도 좋은 선택이에요',
+     en:"• No certificates needed — many employers hire with zero prior experience\n• Search hotel websites or SEEK for 'housekeeper / cleaner / room attendant'\n• Registering with a local cleaning company gets you placed across multiple sites\n• Cleaning equipment is usually provided — no need to buy your own\n• Airbnb-focused cleaning startups like Tidy or Hometime are also great options"
+   }},
+  {name:{ko:'보육/오페어',en:'Childcare / Au Pair'},emoji:'👶',wage:'$20–28/hr',
+   sc:{social:6,active:4,urban:5,earning:3,english:7,adventure:3},
+   reason:{
+     ko:'돌봄에 관심 있고 현지 가족 문화를 직접 경험하고 싶은 당신에게 딱 맞아요. 숙식이 제공되는 경우가 많아 생활비를 크게 절약할 수 있어요.',
+     en:"If you're passionate about childcare and want to experience real Australian family life, au pair work is a wonderful match. Accommodation is often included, cutting living costs significantly."
+   },
+   prep:{
+     ko:'• AuPairWorld, Care.com 등 플랫폼에 영문 프로필 등록해 호스트 가족 매칭\n• 아동 응급처치(First Aid) 자격증 취득 시 채용 가능성 대폭 상승\n• Working with Children Check(아동 업무 허가) 취득은 필수예요\n• 숙식 조건, 주간 근무 시간, 수당을 계약서에 명확히 기재\n• 호스트 가족과 사전 영상 인터뷰로 궁합 확인 후 계약 진행 권장',
+     en:"• Register your profile on AuPairWorld or Care.com to match with host families\n• Getting a childcare First Aid certificate significantly boosts your chances\n• A Working with Children Check is mandatory — apply for it upon arrival\n• Document accommodation, meals, hours, and allowance clearly in a written agreement\n• Always do a video call with the host family first to check compatibility"
+   }}
+];
+
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+let lang='ko', qIdx=0, hist=[];
+let P={urban:5,social:5,active:5,earning:5,english:5,adventure:5};
+let savedCities=[], savedJobs=[];
+
+// ════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════
+const clamp=(v,lo=0,hi=10)=>Math.max(lo,Math.min(hi,v));
+const $=id=>document.getElementById(id);
+function applyD(d,sign){for(const[k,v]of Object.entries(d||{}))P[k]=clamp(P[k]+v*sign);}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');$(id).scrollTop=0;}
+
+// ════════════════════════════════════════
+// LANG / INTRO
+// ════════════════════════════════════════
+function selectLang(l){
+  lang=l;
+  const t=T[l];
+  $('i-title').innerHTML=t.iTitle;
+  $('i-desc').innerHTML=t.iDesc;
+  $('i-feats').innerHTML=t.feats.map(([ic,tx])=>`<div class="feat"><span class="feat-icon">${ic}</span><span class="feat-text">${tx}</span></div>`).join('');
+  $('i-btn').textContent=t.iBtn;
+  $('back-lang-txt').textContent=t.backLang;
+  show('s-intro');
+}
+
+// ════════════════════════════════════════
+// QUIZ
+// ════════════════════════════════════════
+function startQuiz(){
+  qIdx=0;hist=[];
+  P={urban:5,social:5,active:5,earning:5,english:5,adventure:5};
+  show('s-quiz');renderQ();
+}
+
+function renderQ(){
+  const qs=QS[lang], t=T[lang], total=qs.length;
+  $('q-lbl').textContent=`${qIdx+1} ${t.of} ${total}`;
+  $('prog-fill').style.width=`${(qIdx/total)*100}%`;
+
+  const body=$('q-body'); body.innerHTML='';
+  const q=qs[qIdx];
+
+  // One card — question at top, options below (mirrors intro card layout)
+  const card=document.createElement('div'); card.className='q-card';
+
+  const qt=document.createElement('div'); qt.className='q-text';
+  qt.textContent=q.q; card.appendChild(qt);
+
+  const od=document.createElement('div'); od.className='opts';
+  q.opts.forEach(opt=>{
+    const btn=document.createElement('button'); btn.className='opt-btn';
+    btn.innerHTML=`<span class="opt-e">${opt.e}</span><span class="opt-t">${opt.t}</span>`;
+    btn.onclick=()=>pick(opt); od.appendChild(btn);
+  });
+  card.appendChild(od);
+  body.appendChild(card);
+
+  // Back button below the card
+  const backBtn=document.createElement('button'); backBtn.className='btn-back';
+  backBtn.textContent=lang==='ko'?'← 뒤로가기':'← Go Back';
+  backBtn.onclick=()=>goBack();
+  body.appendChild(backBtn);
+}
+
+function pick(opt){
+  if(document.activeElement) document.activeElement.blur();
+  applyD(opt.d,1); hist.push({e:opt.e,t:opt.t,d:opt.d});
+  qIdx++;
+  // 딜레이: 터치 기기에서 :active/:hover 상태가 완전히 해제된 뒤 다음 화면 렌더
+  setTimeout(()=>{ qIdx>=QS[lang].length?showResults():renderQ(); }, 80);
+}
+function skipQ(){
+  hist.push({e:'⏭️',t:lang==='ko'?'건너뜀':'Skipped',d:{}});
+  qIdx++; qIdx>=QS[lang].length?showResults():renderQ();
+}
+function goBack(){
+  if(qIdx===0){show('s-intro');return;}
+  qIdx--; const last=hist.pop(); applyD(last.d,-1); renderQ();
+}
+
+// ════════════════════════════════════════
+// MATCHING
+// ════════════════════════════════════════
+const CW={urban:2,social:1.5,active:1.5,earning:1,english:1,adventure:1.5};
+const JW={social:2,active:2.5,urban:1,earning:2,english:1.5,adventure:1};
+
+function calcMatch(sc,w){
+  let s=0,tot=0;
+  for(const[d,wv]of Object.entries(w)){
+    const u=P[d]??5, tv=sc[d]??5;
+    s+=wv*(1-Math.abs(u-tv)/10); tot+=wv;
+  }
+  return Math.round(s/tot*100);
+}
+
+function normalize(arr){
+  const mx=Math.max(...arr.map(x=>x.m));
+  if(!mx)return;
+  arr.forEach(x=>{x.m=Math.min(97,Math.round(x.m*90/mx));});
+}
+
+// ════════════════════════════════════════
+// RESULTS
+// ════════════════════════════════════════
+function showResults(){
+  const t=T[lang];
+  $('r-title').textContent=t.rTitle; $('r-sub').textContent=t.rSub;
+
+  const cities=CITIES.map(c=>({...c,m:calcMatch(c.sc,CW)})).sort((a,b)=>b.m-a.m);
+  normalize(cities);
+  const jobs=JOBS.map(j=>({...j,m:calcMatch(j.sc,JW)})).sort((a,b)=>b.m-a.m);
+  normalize(jobs);
+  savedCities=cities.slice(0,3); savedJobs=jobs.slice(0,3);
+
+  const body=$('r-body'); body.innerHTML='';
+  const medals=['🥇','🥈','🥉'];
+
+  // Personality
+  const pc=document.createElement('div'); pc.className='pf-card';
+  pc.innerHTML=`<div class="card-title">${t.pfTitle}</div><div class="tags">${buildTags().map(tg=>`<span class="tag">${tg}</span>`).join('')}</div>`;
+  body.appendChild(pc);
+
+  // Cities
+  const cl=document.createElement('div'); cl.className='sec-lbl'; cl.textContent=t.cityTitle; body.appendChild(cl);
+  const cc=document.createElement('div'); cc.className='r-card';
+  cities.slice(0,3).forEach((c,i)=>{
+    const nm=lang==='ko'?c.nameKo:c.name;
+    const div=document.createElement('div'); div.className='city-item';
+    div.innerHTML=`
+      <div class="item-top">
+        <div class="medal">${medals[i]}</div>
+        <div class="item-info"><div class="item-name">${c.emoji} ${nm}</div></div>
+        <div class="pct-col">
+          <div class="pct-num">${c.m}%</div>
+          <div class="bar-track"><div class="bar-fill" data-w="${c.m}"></div></div>
+        </div>
+      </div>
+      <div class="c-tags">${c.tags[lang].map(tg=>`<span class="c-tag">${tg}</span>`).join('')}</div>
+      <div class="reason-txt">${c.reason[lang]}</div>`;
+    cc.appendChild(div);
+  });
+  body.appendChild(cc);
+
+  // Jobs
+  const jl=document.createElement('div'); jl.className='sec-lbl'; jl.textContent=t.jobTitle; body.appendChild(jl);
+  const jc=document.createElement('div'); jc.className='r-card';
+  jobs.slice(0,3).forEach((j,i)=>{
+    const nm=j.name[lang];
+    const div=document.createElement('div'); div.className='job-item';
+    div.innerHTML=`
+      <div class="item-top">
+        <div class="medal">${medals[i]}</div>
+        <div class="item-info">
+          <div class="item-name">${j.emoji} ${nm}</div>
+          <div class="item-sub"><span class="wage-badge">💵 ${j.wage}</span></div>
+        </div>
+        <div class="pct-col">
+          <div class="pct-num">${j.m}%</div>
+          <div class="bar-track"><div class="bar-fill" data-w="${j.m}"></div></div>
+        </div>
+      </div>
+      <div class="block-lbl">💬 ${t.whyLbl}</div>
+      <div class="reason-txt">${j.reason[lang]}</div>
+      <div class="prep-box">
+        <div class="block-lbl">📋 ${t.prepLbl}</div>
+        <div class="prep-txt">${j.prep[lang]}</div>
+      </div>`;
+    jc.appendChild(div);
+  });
+  body.appendChild(jc);
+
+  const sb=document.createElement('button'); sb.className='restart-btn save-btn';
+  sb.textContent=lang==='ko'?'결과 저장하기 📸':'Save Results 📸';
+  sb.onclick=saveImages; body.appendChild(sb);
+
+  const rb=document.createElement('button'); rb.className='restart-btn';
+  rb.style.background='rgba(0,0,0,0)'; rb.style.color='#9ca3af';
+  rb.style.border='1.5px solid #f3e8ff'; rb.style.boxShadow='none';
+  rb.textContent=t.restart; rb.onclick=()=>show('s-lang'); body.appendChild(rb);
+
+  show('s-results');
+  requestAnimationFrame(()=>{
+    setTimeout(()=>{
+      document.querySelectorAll('.bar-fill').forEach(el=>{el.style.width=el.dataset.w+'%';});
+    },120);
+  });
+}
+
+// ════════════════════════════════════════
+// IMAGE SAVE
+// ════════════════════════════════════════
+async function saveImages(){
+  const btn=document.querySelector('.save-btn');
+  const orig=btn.textContent;
+  btn.textContent=lang==='ko'?'생성 중... ⏳':'Generating... ⏳';
+  btn.disabled=true;
+  try{
+    const c1=await generateCanvas(buildCityCard());
+    const c2=await generateCanvas(buildJobCard());
+    const isMobile='ontouchstart' in window||navigator.maxTouchPoints>0;
+    if(isMobile){
+      showImageOverlay(c1,c2);
+    } else {
+      downloadCanvas(c1, lang==='ko'?'AusMatch_추천도시.png':'AusMatch_Cities.png');
+      await new Promise(r=>setTimeout(r,500));
+      downloadCanvas(c2, lang==='ko'?'AusMatch_추천직종.png':'AusMatch_Jobs.png');
+    }
+  }catch(e){
+    alert(lang==='ko'?'오류가 발생했어요. 다시 시도해 주세요.':'An error occurred. Please try again.');
+  }finally{
+    btn.textContent=orig; btn.disabled=false;
+  }
+}
+
+async function generateCanvas(el){
+  document.body.appendChild(el);
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+  const canvas=await html2canvas(el,{scale:2,useCORS:true,logging:false,backgroundColor:null});
+  document.body.removeChild(el);
+  return canvas;
+}
+
+function downloadCanvas(canvas,filename){
+  const a=document.createElement('a');
+  a.href=canvas.toDataURL('image/png'); a.download=filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function showImageOverlay(c1,c2){
+  const ko=lang==='ko';
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:24px 16px 52px;box-sizing:border-box;';
+
+  const topBar=document.createElement('div');
+  topBar.style.cssText='display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;';
+  const closeId='ov-close-'+Date.now();
+  topBar.innerHTML=`
+    <div>
+      <div style="color:#fff;font-size:15px;font-weight:700;margin-bottom:4px">${ko?'결과 이미지 저장':'Save Result Images'}</div>
+      <div style="color:#c4b5fd;font-size:12px">${ko?'이미지를 길게 눌러 저장하세요 📲':'Long press an image to save 📲'}</div>
+    </div>
+    <button id="${closeId}" style="background:rgba(255,255,255,.15);border:none;color:#fff;font-size:14px;padding:9px 15px;border-radius:10px;cursor:pointer;flex-shrink:0;margin-left:12px">${ko?'닫기':'Close'}</button>
+  `;
+  ov.appendChild(topBar);
+
+  [c1,c2].forEach((canvas,i)=>{
+    const lbl=document.createElement('div');
+    lbl.style.cssText='color:#f9a8d4;font-size:13px;font-weight:700;margin-bottom:8px;';
+    lbl.textContent=ko?(i===0?'① 추천 도시 TOP 3':'② 추천 직종 TOP 3'):(i===0?'① Top 3 Cities':'② Top 3 Jobs');
+    const img=document.createElement('img');
+    img.src=canvas.toDataURL('image/png');
+    img.style.cssText='width:100%;border-radius:14px;display:block;margin-bottom:20px;';
+    ov.appendChild(lbl);
+    ov.appendChild(img);
+  });
+
+  document.body.appendChild(ov);
+  document.getElementById(closeId).onclick=()=>ov.remove();
+}
+
+function imgBase(content){
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;left:-9999px;top:0;width:390px;background:linear-gradient(160deg,#fdf8ff 0%,#f0e6ff 55%,#e4d0ff 100%);padding:52px 24px 64px;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;';
+  const ko=lang==='ko';
+  el.innerHTML=`
+    <div style="text-align:center;margin-bottom:36px">
+      <div style="font-size:54px;margin-bottom:10px">🦘</div>
+      <div style="font-size:24px;font-weight:800;color:#f472b6;letter-spacing:-.5px">AusMatch</div>
+      <div style="font-size:12px;color:#a78bfa;margin-top:6px;font-weight:500">${ko?'나의 워홀 매칭 결과':'My WHV Match Results'}</div>
+    </div>
+    ${content}
+    <div style="text-align:center;margin-top:36px;font-size:11px;color:#c4b5fd;font-weight:500">Made with AusMatch</div>
+  `;
+  return el;
+}
+
+function buildCityCard(){
+  const medals=['🥇','🥈','🥉']; const ko=lang==='ko';
+  const rows=savedCities.map((c,i)=>`
+    <div style="background:rgba(255,255,255,.88);border-radius:20px;padding:20px 18px;margin-bottom:13px;border:1px solid rgba(243,232,255,.9)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">
+        <span style="font-size:22px">${medals[i]}</span>
+        <span style="font-size:16px;font-weight:700;color:#111827;flex:1">${c.emoji} ${ko?c.nameKo:c.name}</span>
+        <span style="font-size:20px;font-weight:800;color:#f472b6">${c.m}%</span>
+      </div>
+      <div style="height:5px;background:#f3f4f6;border-radius:3px;margin-bottom:10px;overflow:hidden">
+        <div style="height:100%;width:${c.m}%;background:linear-gradient(90deg,#f9a8d4,#f472b6);border-radius:3px"></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px">
+        ${c.tags[lang].map(t=>`<span style="padding:3px 9px;background:#f5f3ff;border-radius:6px;font-size:11px;font-weight:600;color:#7c3aed">${t}</span>`).join('')}
+      </div>
+      <div style="font-size:12px;color:#4b5563;line-height:1.7">${c.reason[lang]}</div>
+    </div>`).join('');
+  return imgBase(`
+    <div style="font-size:17px;font-weight:800;color:#1e1b4b;margin-bottom:16px">🏙️ ${ko?'추천 도시 TOP 3':'Top 3 Recommended Cities'}</div>
+    ${rows}
+  `);
+}
+
+function buildJobCard(){
+  const medals=['🥇','🥈','🥉']; const ko=lang==='ko';
+  const rows=savedJobs.map((j,i)=>`
+    <div style="background:rgba(255,255,255,.88);border-radius:20px;padding:20px 18px;margin-bottom:13px;border:1px solid rgba(243,232,255,.9)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">
+        <span style="font-size:22px">${medals[i]}</span>
+        <div style="flex:1">
+          <div style="font-size:16px;font-weight:700;color:#111827">${j.emoji} ${j.name[lang]}</div>
+          <span style="display:inline-block;padding:3px 9px;background:#fdf2f8;border-radius:6px;font-size:11px;font-weight:600;color:#be185d;border:1px solid #fbcfe8;margin-top:4px">💵 ${j.wage}</span>
+        </div>
+        <span style="font-size:20px;font-weight:800;color:#f472b6">${j.m}%</span>
+      </div>
+      <div style="height:5px;background:#f3f4f6;border-radius:3px;margin-bottom:10px;overflow:hidden">
+        <div style="height:100%;width:${j.m}%;background:linear-gradient(90deg,#f9a8d4,#f472b6);border-radius:3px"></div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#c084fc;margin-bottom:4px">💬 ${ko?'왜 추천하나요?':'Why this pick?'}</div>
+      <div style="font-size:12px;color:#4b5563;line-height:1.7;margin-bottom:10px">${j.reason[lang]}</div>
+      <div style="background:#fafafa;border-radius:10px;border:1px solid #f0ecff;padding:12px 13px">
+        <div style="font-size:11px;font-weight:700;color:#c084fc;margin-bottom:5px">📋 ${ko?'이렇게 준비하세요':'How to prepare'}</div>
+        <div style="font-size:11px;color:#4b5563;line-height:2;white-space:pre-line">${j.prep[lang]}</div>
+      </div>
+    </div>`).join('');
+  return imgBase(`
+    <div style="font-size:17px;font-weight:800;color:#1e1b4b;margin-bottom:16px">💼 ${ko?'추천 직종 TOP 3':'Top 3 Recommended Jobs'}</div>
+    ${rows}
+  `);
+}
+
+function buildTags(){
+  const ko=lang==='ko', tags=[];
+  if(P.urban>=6)       tags.push(ko?'🏙️ 도시형':'🏙️ City Person');
+  else if(P.urban<=4)  tags.push(ko?'🌿 자연형':'🌿 Nature Lover');
+  if(P.social>=7)      tags.push(ko?'🤝 사교적':'🤝 Extrovert');
+  else if(P.social<=3) tags.push(ko?'🎧 내향적':'🎧 Introvert');
+  if(P.active>=7)      tags.push(ko?'💪 액티브':'💪 Active');
+  else if(P.active<=3) tags.push(ko?'💻 데스크형':'💻 Desk Lover');
+  if(P.earning>=7)     tags.push(ko?'💰 수익 중심':'💰 Money-Focused');
+  else if(P.earning<=3) tags.push(ko?'✨ 경험 중심':'✨ Experience-Focused');
+  if(P.adventure>=7)   tags.push(ko?'🏕️ 모험가':'🏕️ Adventurer');
+  if(P.english>=7)     tags.push(ko?'🗣️ 영어 자신감':'🗣️ Confident English');
+  else if(P.english<=3) tags.push(ko?'📖 영어 학습 중':'📖 Building English');
+  if(!tags.length)     tags.push(ko?'🌏 자유로운 영혼':'🌏 Free Spirit');
+  return tags;
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</body>
+</html>
